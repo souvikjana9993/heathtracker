@@ -6,3 +6,15 @@ report_extracts/
 
 # Ignore reports directory
 reports/
+renamed_report_extracts/
+
+# Ignore Python cache files
+/__pycache__/*
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Conda environment
+.conda/
+__pycache__/pdf_utils.cpython-311.pyc
+

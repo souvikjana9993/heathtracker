@@ -5,3 +5,5 @@ streamlit
 pandas
 plotly
 sentence-transformers
+fuzzywuzzy
+python-Levenshtein

@@ -5,14 +5,16 @@ import plotly.express as px
 import streamlit as st
 from pdf_utils import extract_report_data, get_report_date  # Import your extraction functions
 import re
+from parameters_rename_agent import fix_parameters_across_json
 
 # --- Constants ---
 REPORTS_DIR = "reports"  # Temporary storage during upload
-EXTRACTS_DIR = "report_extracts"
+EXTRACTS_DIR = "renamed_report_extracts"
 
 # --- Functions ---
-def load_reports(directory):
+def fix_and_load_reports(directory):
     """Loads all JSON reports from the given directory and returns a DataFrame."""
+    fix_parameters_across_json()
     reports = []
     for filename in os.listdir(directory):
         if filename.endswith('.json'):
@@ -122,7 +124,7 @@ if uploaded_files:
 # Load and Display Data
 @st.cache_data
 def load_data():
-    return load_reports(EXTRACTS_DIR)
+    return fix_and_load_reports(EXTRACTS_DIR)
 
 reports_df = load_data()
 

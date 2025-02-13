@@ -60,10 +60,6 @@ def extract_report_data(pdf_path):
         report_data = response.text
         # Normalize parameter names
         report_json = json.loads(report_data)
-        if 'parameters' in report_json:
-            for param in report_json['parameters']:
-                if 'name' in param:
-                    param['name'] = normalize_parameter_name(param['name'])
 
         report_data = json.dumps(report_json, indent=4) 
         return report_data
@@ -98,21 +94,3 @@ def get_report_date(report_data, filename):
         # If JSON decoding fails, fallback to filename
         return extract_date_from_filename(filename)
     
-      
-def normalize_parameter_name(name):
-    """
-    Normalizes a parameter name to a standard form.
-    """
-    name = name.lower().strip()  # Convert to lowercase and remove leading/trailing spaces
-
-    if "ldl" in name and "cholesterol" in name and 'ratio' not in name and 'Non' not in name:
-        return "LDL-Cholesterol"  # Standard name
-    elif "hdl" in name and "cholesterol" in name and 'ratio' not in name and 'Non' not in name:
-        return "HDL-Cholesterol"
-    elif "vldl" in name and "cholesterol" in name and 'ratio' not in name and 'Non' not in name:
-        return "VLDL-Cholesterol"
-    elif "triglycerides" in name:
-        return "Triglycerides"
-    # Add more rules as needed for other common variations
-
-    return name  # Return the original name if no match is found
