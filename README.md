@@ -6,23 +6,15 @@ Welcome to the Health Tracker project! This application helps you monitor and ma
 
 - Upload and process PDF medical reports
 - Visualize health parameters through interactive charts
-- Track multiple patients' health metrics over time
 - Generate personalized health recommendations
-- Store processed reports in JSON format
-- Automatic parameter renaming support
 
 ## Project Structure
 
 - `viz.py` - Main visualization dashboard using Streamlit
-- `parser.py` - PDF report parsing logic
-- `pdf_utils.py` - PDF processing utilities
+- `personalised_reco_agent.py` - Generates a AI report of the health parameter history
+- `pdf_utils.py` - PDF processing utilities 
 - `models.py` - Data models and structures
-- `parameters_rename_agent.py` - Parameter renaming functionality
-
-## Data Storage
-
-- Processed reports are stored in `reports/` directory
-- Renamed parameter reports are stored in `renamed_report_extracts/`
+- `parameters_rename_agent.py` - Renames parameters correctly across multiple reports using embeddings
 
 ## Requirements
 
