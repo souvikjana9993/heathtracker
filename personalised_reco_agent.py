@@ -23,25 +23,29 @@ def get_personalized_recommendations(patient_name, parameter, trend_data):
     """
     Generates personalized recommendations using the Gemini API based on trend data.
     """
-    # Calculate the most recent parameter value
-    most_recent_value = trend_data['result'].iloc[-1] if not trend_data.empty else "N/A"
 
     # Determine reference interval. Assumes all entries have same intervals
     try:
-        lower_limit = trend_data['reference_interval'].iloc[0].get('lower', 'N/A')
-        upper_limit = trend_data['reference_interval'].iloc[0].get('upper', 'N/A')
+        reference_interval = trend_data['reference_interval'].iloc[0]
+        reference_interval_str = ", ".join([f"{k}: {v}" for k, v in reference_interval.items()])
     except AttributeError:
-        lower_limit = "N/A"
-        upper_limit = "N/A"
+        reference_interval_str = "N/A"
+
+    # Format trend data
+    trend_data_str = ""
+    for index, row in trend_data.iterrows():
+        date = row['report_date'].strftime('%Y-%m-%d') if isinstance(row['report_date'], pd.Timestamp) else "Unknown Date"
+        trend_data_str += f"Date: {date}, Result: {row['result']}, "
+
     # Build the prompt
     prompt = f"""
     You are a medical expert providing personalized health recommendations.
 
     Patient Name: {patient_name}
     Parameter: {parameter}
-    Most Recent Value: {most_recent_value}
-    Reference Interval: {lower_limit} - {upper_limit} (if available, otherwise N/A)
-    Past trend data is : {trend_data}
+    Reference Interval: {reference_interval_str} (if available, otherwise N/A)
+    Trend data is : {trend_data_str}
+
     Instructions:
 
     1.  Analyze the provided parameter and its trend data to understand the patient's health status.
@@ -49,6 +53,7 @@ def get_personalized_recommendations(patient_name, parameter, trend_data):
     2.  Assess the patient's most recent parameter value in relation to the reference interval:
         -   If the value is within the reference interval, reassure the patient and encourage maintaining a healthy lifestyle.
         -   If the value is outside the reference interval, provide a concise warning about potential health risks and suggest appropriate actions.
+        -   Also try to keep your knowledge on the correct reference interval for the parameter.
 
     3.  Based on the trend data, give specific, actionable diet and lifestyle suggestions to help the patient improve their parameter levels. Focus on practical changes.
 
@@ -57,6 +62,7 @@ def get_personalized_recommendations(patient_name, parameter, trend_data):
 
     Personalized Recommendations:
     """
+
 
     try:
         response = client.models.generate_content(model=model_id,contents=[prompt])

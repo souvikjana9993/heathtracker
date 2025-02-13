@@ -1,3 +1,10 @@
 {
-    "RDW-CV": "Red Cell Distribution Width-CV"
+    "Specific Gravity": "Specific Gravity (Urine)",
+    "Glucose": "Urine Glucose",
+    "Protein": "Urine Protein",
+    "Ketones": "Urine Ketones",
+    "Pus Cells": "Urine Pus Cells",
+    "Epithelial Cells": "Urine Epithelial Cells",
+    "Casts": "Urine Casts",
+    "Crystals": "Urine Crystals"
 }

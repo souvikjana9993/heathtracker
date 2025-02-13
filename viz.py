@@ -112,6 +112,10 @@ st.title("Health Tracker Dashboard")
 # File Upload Section
 uploaded_files = st.file_uploader("Upload Medical Reports (PDF)", type=["pdf"], accept_multiple_files=True)
 
+if not os.path.exists('report_extracts'):
+    os.makedirs('report_extracts')
+
+    st.info("Temporary PDF storage directory created.")
 # Process Button
 if uploaded_files:
     if st.button("Start Processing"):
@@ -130,7 +134,6 @@ reports_df = load_data()
 if not reports_df.empty:
 
     st.write("### Loaded Reports Data")
-    st.dataframe(reports_df.head())
 
     # Parameter Selection
     parameter_options = reports_df['name'].unique().tolist()
