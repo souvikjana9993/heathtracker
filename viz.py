@@ -6,6 +6,7 @@ import streamlit as st
 from pdf_utils import extract_report_data, get_report_date  # Import your extraction functions
 import re
 from parameters_rename_agent import fix_parameters_across_json
+from personalised_reco_agent import get_personalized_recommendations
 
 # --- Constants ---
 REPORTS_DIR = "reports"  # Temporary storage during upload
@@ -49,17 +50,15 @@ def plot_trend(df, parameter_name):
     )
     return fig
 
-def get_personalized_recommendations(patient_name, parameter, trend_data):
-    """Placeholder function for integrating agentic AI."""
-    recommendation = (f"Patient {patient_name}: Your {parameter} levels are here. "
-                      "Consider scheduling a consultation for further analysis. Add agentic AI functionality here.")
-    return recommendation
 
 def process_pdf_reports(uploaded_files):
     """Processes uploaded PDF reports and saves extracted data to JSON files."""
     # Ensure the REPORTS_DIR exists for temporary storage
     if not os.path.exists(REPORTS_DIR):
         os.makedirs(REPORTS_DIR)
+
+    if not os.path.exists(EXTRACTS_DIR):
+        os.makedirs(EXTRACTS_DIR)
 
     # Ensure the EXTRACTS_DIR exists for storing the extracted data
     if not os.path.exists(EXTRACTS_DIR):
@@ -146,7 +145,8 @@ if not reports_df.empty:
         for patient in reports_df['patient_name'].unique():
             patient_params = reports_df[reports_df['patient_name'] == patient]
             if selected_parameter in patient_params['name'].values:
-                rec = get_personalized_recommendations(patient, selected_parameter, patient_params)
+                trend_data = patient_params[patient_params['name'] == selected_parameter]
+                rec = get_personalized_recommendations(patient, selected_parameter, trend_data)
                 st.write(rec)
 else:
     st.info("Upload and process PDF reports to see the data.")

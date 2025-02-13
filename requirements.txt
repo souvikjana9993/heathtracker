@@ -4,6 +4,4 @@ python-dotenv
 streamlit
 pandas
 plotly
-sentence-transformers
-fuzzywuzzy
-python-Levenshtein
+python-dotenv

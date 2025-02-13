@@ -7,14 +7,13 @@ report_extracts/
 # Ignore reports directory
 reports/
 renamed_report_extracts/
-
-# Ignore Python cache files
-/__pycache__/*
-*.pyc
-*.pyo
-*.pyd
+# Ignore .venv directory
+.venv/
 
 # Ignore Conda environment
 .conda/
 __pycache__/pdf_utils.cpython-311.pyc
 
+__pycache__/models.cpython-311.pyc
+__pycache__/parameters_rename_agent.cpython-311.pyc
+__pycache__/personalised_reco_agent.cpython-311.pyc
