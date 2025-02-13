@@ -1,0 +1,8 @@
+# Ignore environment files
+.env
+
+# Ignore report extracts directory
+report_extracts/
+
+# Ignore reports directory
+reports/
