@@ -39,6 +39,36 @@ def load_parameters_from_json(json_file):
         logging.error(f"Invalid JSON in file: {json_file}")
         return []
 
+
+def extract_range_values(reference_interval_str):
+    """Extracts lower and upper range values from a reference interval string."""
+    if not reference_interval_str:
+        return None, None
+
+    try:
+        # First try to find the lower and upper
+        match = re.match(r"([+-]?\d*\.?\d+)\s*-\s*([+-]?\d*\.?\d+)", reference_interval_str)
+        if match:
+            lower = float(match.group(1))
+            upper = float(match.group(2))
+        else:
+             # Otherwise it needs to be greather than or less than
+            match_lower = re.match(r">([+-]?\d*\.?\d+)", reference_interval_str)
+            match_upper = re.match(r"<([+-]?\d*\.?\d+)", reference_interval_str)
+
+            lower = None
+            upper = None
+            if match_lower:
+                lower = float(match_lower.group(1))
+            if match_upper:
+                upper = float(match_upper.group(1))
+
+        return lower, upper
+    except Exception as e:
+        logging.error(f"Error extracting range values: {e}")
+        return None, None
+
+
 def normalize_parameters_with_gemini(all_parameters):
     """
     Normalizes all parameter names using a single Gemini API call.
@@ -104,16 +134,16 @@ def normalize_parameters_with_gemini(all_parameters):
         response = client.models.generate_content(model=model_id, contents=[full_prompt])
         json_string = response.text.strip()
 
-        #remove code blocks
+        # remove code blocks
         json_string = re.sub(r'```json\n', '', json_string)
         json_string = re.sub(r'```', '', json_string)
 
-        #Remove any leading or trailing characters that are not part of the JSON structure
+        # Remove any leading or trailing characters that are not part of the JSON structure
         json_string = json_string.strip()
 
         if json_string.startswith('{') and json_string.endswith('}'):
 
-        # Parse the JSON response
+            # Parse the JSON response
             try:
                 normalized_names = json.loads(json_string)
                 logging.info("Successfully normalized parameter names using Gemini.")
@@ -158,6 +188,30 @@ def rename_parameters(all_parameters, normalized_names):
                     # Update renamed mapping
                     if original_name not in renamed_mapping:
                         renamed_mapping[original_name] = normalized_name
+
+            # Extract range values and modify the reference_interval structure
+            if 'reference_interval' in p:
+                reference_interval = p['reference_interval']
+
+                # Check if other keys are null
+                if (reference_interval.get('normal') is None and
+                    reference_interval.get('medium') is None and
+                    reference_interval.get('high') is None and
+                    reference_interval.get('veryhigh') is None and
+                    reference_interval.get('other') is not None): # Other is present
+
+                    other_value = reference_interval.get('other')  # Get the value from the "other" field
+                    lower, upper = extract_range_values(other_value)
+
+                    # Create a new dictionary with 'upper' and 'lower'
+                    new_reference_interval = {}
+                    if lower is not None:
+                        new_reference_interval['lower'] = lower
+                    if upper is not None:
+                        new_reference_interval['upper'] = upper
+
+                    # Replace the entire reference_interval with the new one
+                    p['reference_interval'] = new_reference_interval
 
         # Save the modified JSON file
         with open(filename, 'w') as f:
