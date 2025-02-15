@@ -59,10 +59,10 @@ def get_personalized_recommendations(patient_name, parameter, trend_data):
 
     4.  Keep the tone friendly and encouraging.
     5.  Limit the response to under 200 words.
+    6. ALWAYS SUGGEST TO CONSULT A DOCTOR FOR FURTHER EVALUATION AND TREATMENT WHEN THE PARAMETER IS OUTSIDE THE REFERENCE INTERVAL.
 
     Personalized Recommendations:
     """
-
 
     try:
         response = client.models.generate_content(model=model_id,contents=[prompt])
