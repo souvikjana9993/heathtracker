@@ -39,6 +39,19 @@ def load_parameters_from_json(json_file):
         logging.error(f"Invalid JSON in file: {json_file}")
         return []
 
+def load_existing_mappings(filename):
+    """Loads existing parameter mappings from a JSON file."""
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logging.info(f"Mapping file '{filename}' not found. Starting with empty mappings.")
+        return {}
+    except json.JSONDecodeError:
+        logging.error(f"Invalid JSON in mapping file '{filename}'. Starting with empty mappings.")
+        return {}
+    return {}
+
 
 def extract_range_values(reference_interval_str):
     """Extracts lower and upper range values from a reference interval string."""
@@ -72,8 +85,25 @@ def extract_range_values(reference_interval_str):
 def normalize_parameters_with_gemini(all_parameters):
     """
     Normalizes all parameter names using a single Gemini API call.
+    Uses existing mappings if available and only queries Gemini for new parameters.
     """
-    # Build the prompt with all parameter names
+    existing_mappings = load_existing_mappings(RENAMED_MAPPING_FILE)
+    normalized_names = existing_mappings.copy() # Start with existing mappings
+    new_parameter_names = set()
+
+    for filename, params in all_parameters.items():
+        for p in params:
+            original_name = p['name']
+            if original_name not in normalized_names:
+                new_parameter_names.add(original_name)
+
+    if not new_parameter_names:
+        logging.info("No new parameters to normalize. Using existing mappings.")
+        return normalized_names
+
+    logging.info(f"Normalizing new parameters using Gemini: {new_parameter_names}")
+
+    # Build the prompt with only new parameter names
     prompt_header = """
     You are a medical data normalizer. Your task is to standardize a list of given parameter names into common, well-defined medical terms.
     Consider common abbreviations, synonyms, and variations in terminology.
@@ -113,12 +143,7 @@ def normalize_parameters_with_gemini(all_parameters):
     """
 
     prompt_body = ""
-    all_parameter_names = set()
-    for filename, params in all_parameters.items():
-        for p in params:
-            all_parameter_names.add(p['name'])
-
-    for name in all_parameter_names:
+    for name in new_parameter_names:
         escaped_name = name.replace('"', '\\"')  # Escape double quotes
         prompt_body += f'"{escaped_name}": "",\n'
 
@@ -145,25 +170,25 @@ def normalize_parameters_with_gemini(all_parameters):
 
             # Parse the JSON response
             try:
-                normalized_names = json.loads(json_string)
-                logging.info("Successfully normalized parameter names using Gemini.")
-                return normalized_names
+                gemini_normalized_names = json.loads(json_string)
+                logging.info("Successfully normalized new parameter names using Gemini.")
+                # Merge new mappings with existing ones
+                normalized_names.update(gemini_normalized_names)
             except json.JSONDecodeError as e:
                 logging.error(f"Error decoding JSON from Gemini: {e}")
                 logging.error(f"Problematic JSON string: {json_string}")  # Log the problematic string
-                return {}  # Return an empty dictionary on error
         else:
             logging.error("Gemini returned an invalid JSON response.")
             logging.error(f"Response text: {response.text}")  # Log the result
-            return {}
     except Exception as e:
         logging.error(f"Error normalizing parameters with Gemini: {e}")
-        return {}  # Return an empty dictionary on error
+
+    return normalized_names
 
 
 def rename_parameters(all_parameters, normalized_names):
     """
-    Renames parameters in the copied JSON files based on the normalized names from Gemini.
+    Renames parameters in the copied JSON files based on the normalized names.
     """
     renamed_mapping = {}  # Store the mapping of renamed parameters
     renamed_counts = {}
@@ -185,33 +210,9 @@ def rename_parameters(all_parameters, normalized_names):
                     )
                     p['name'] = normalized_name
                     renamed_counts[filename] += 1  # Increase renames
-                    # Update renamed mapping
-                    if original_name not in renamed_mapping:
+                    # Update renamed mapping (only if actually renamed)
+                    if original_name not in renamed_mapping and normalized_name != original_name:
                         renamed_mapping[original_name] = normalized_name
-
-            # Extract range values and modify the reference_interval structure
-            if 'reference_interval' in p:
-                reference_interval = p['reference_interval']
-
-                # Check if other keys are null
-                if (reference_interval.get('normal') is None and
-                    reference_interval.get('medium') is None and
-                    reference_interval.get('high') is None and
-                    reference_interval.get('veryhigh') is None and
-                    reference_interval.get('other') is not None): # Other is present
-
-                    other_value = reference_interval.get('other')  # Get the value from the "other" field
-                    lower, upper = extract_range_values(other_value)
-
-                    # Create a new dictionary with 'upper' and 'lower'
-                    new_reference_interval = {}
-                    if lower is not None:
-                        new_reference_interval['lower'] = lower
-                    if upper is not None:
-                        new_reference_interval['upper'] = upper
-
-                    # Replace the entire reference_interval with the new one
-                    p['reference_interval'] = new_reference_interval
 
         # Save the modified JSON file
         with open(filename, 'w') as f:
@@ -269,7 +270,7 @@ def fix_parameters_across_json():
             all_parameters[file_path] = load_parameters_from_json(file_path)
 
     # Normalize parameters using Gemini
-    logging.info("Starting parameter normalization using Gemini...")
+    logging.info("Starting parameter normalization...")
     normalized_names = normalize_parameters_with_gemini(all_parameters)
 
     # Rename parameters in the JSON files
@@ -280,7 +281,7 @@ def fix_parameters_across_json():
     logging.info(f"Total parameters renamed: {total_renamed}")
 
     # Save the renamed parameter mapping to a JSON file
-    save_renamed_mapping(renamed_mapping, RENAMED_MAPPING_FILE)
+    save_renamed_mapping(normalized_names, RENAMED_MAPPING_FILE) # Save all normalized names, including existing
 
     logging.info("Parameter matching and renaming process finished.")
 

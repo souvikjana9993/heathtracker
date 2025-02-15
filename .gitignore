@@ -12,8 +12,4 @@ renamed_report_extracts/
 
 # Ignore Conda environment
 .conda/
-__pycache__/pdf_utils.cpython-311.pyc
-
-__pycache__/models.cpython-311.pyc
-__pycache__/parameters_rename_agent.cpython-311.pyc
-__pycache__/personalised_reco_agent.cpython-311.pyc
+__pycache__/*.cpython-311.pyc
