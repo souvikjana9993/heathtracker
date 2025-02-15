@@ -1,4 +1,3 @@
-# summary_agent.py
 import logging
 import pandas as pd
 from google import genai
@@ -26,17 +25,17 @@ def get_overall_summary(patient_name, all_reports_df):
             result = row['result']
             ref_interval = row.get('reference_interval', {})
             ref_str = ", ".join([f"{k}: {v}" for k, v in ref_interval.items() if v]) if isinstance(ref_interval, dict) else "N/A"
-            
+
             param_data.append(f"{date_str}: {result} (Ref: {ref_str})")
-        
+
         trend_data_str += f"\n\n**{param_name}**\n" + "\n".join(param_data)
 
     # Build the prompt
     prompt = f"""
-    You are a senior medical analyst preparing a comprehensive health summary. 
+    You are a senior medical analyst preparing a comprehensive health summary.
 
     Patient: {patient_name}
-    
+
     Health Data:
     {trend_data_str}
 
@@ -53,13 +52,13 @@ def get_overall_summary(patient_name, all_reports_df):
 
     Format:
     # Overall Health Summary for {patient_name}
-    
+
     ## Key Concerns
     - List of critical parameters with values/dates
-    
+
     ## Risk Analysis
     - Potential health risks based on abnormal values
-    
+
     ## Recommended Actions
     - Priority lifestyle changes
     - Suggested medical follow-ups

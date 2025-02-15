@@ -1,4 +1,3 @@
-# pdf_utils.py
 from google import genai
 from dotenv import load_dotenv
 import os
@@ -61,9 +60,9 @@ def extract_report_data(pdf_path):
         # Normalize parameter names
         report_json = json.loads(report_data)
 
-        report_data = json.dumps(report_json, indent=4) 
+        report_data = json.dumps(report_json, indent=4)
         return report_data
-    
+
     except Exception as e:
         print(f"Error processing report: {e}")
         return "{}"  # Return empty JSON object on error
@@ -93,4 +92,3 @@ def get_report_date(report_data, filename):
     except (json.JSONDecodeError, AttributeError):
         # If JSON decoding fails, fallback to filename
         return extract_date_from_filename(filename)
-    

@@ -1,4 +1,3 @@
-# personalized_recommendations.py
 import logging
 import pandas as pd
 from google import genai
