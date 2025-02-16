@@ -12,28 +12,31 @@ from personalised_reco_agent import get_personalized_recommendations
 from summary_agent import get_overall_summary
 import yaml
 from yaml.loader import SafeLoader
+import streamlit as st
+import streamlit_authenticator as stauth
+from streamlit_authenticator.utilities import LoginError
+import yaml
+from yaml.loader import SafeLoader
+
+st.set_page_config(layout="wide")
+
+
+with open("./config.yaml") as file:
+    auth_config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    auth_config["credentials"],
+    auth_config["cookie"]["name"],
+    auth_config["cookie"]["key"],
+    auth_config["cookie"]["expiry_days"],
+)
 
 # --- Constants ---
 REPORTS_DIR = "reports"
 ORIGINAL_EXTRACTS_DIR = "report_extracts"
 RENAMED_EXTRACTS_DIR = "renamed_report_extracts"
 
-# Set wide layout
-st.set_page_config(layout="wide")
 
-# --- Authentication ---
-with open('config.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
-
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days']
-    )
-
-# --- Login Form ---
-name, authentication_status, username = authenticator.login('Login', 'main')
 
 def fix_and_load_reports(directory):
     """Loads all JSON reports from the given directory and returns a DataFrame."""
@@ -125,20 +128,14 @@ def process_pdf_reports(uploaded_files):
 # --- Streamlit App UI ---
 st.title("📊 Health Analytics Dashboard")
 
+try:
+    authenticator.login("main")
+except LoginError as e:
+    st.error(e)
+
 # Handle authentication response
-if authentication_status:
-    st.success(f"Welcome *{name}*!")
-    if st.sidebar.button("Logout", key="logout_button"):
-        authenticator.logout('Login', 'main')
-        st.cache_data.clear()  # Clear cached data
-        st.rerun()
-
-    if 'logged_out' in st.session_state and st.session_state['logged_out']:
-        st.success("You have been successfully logged out.") # Success message
-        del st.session_state['logged_out']
-        
-    st.sidebar.write(f'Welcome {name}')
-
+if st.session_state["authentication_status"]:
+    st.success(f"Welcome *{st.session_state['name']}*!")
     # File Upload Section
     uploaded_files = st.file_uploader(
         "Upload Medical Reports (PDF format)",
@@ -221,9 +218,9 @@ if authentication_status:
 
     else:
         st.info("👋 Upload PDF reports to begin analysis")
+    authenticator.logout("Logout")
 
-elif authentication_status is False:
+elif st.session_state["authentication_status"] is False:
     st.error("Username/password is incorrect")
-elif authentication_status is None:
-    st.warning("Enter your username and password")
-    
+elif st.session_state["authentication_status"] is None:
+    st.warning("Please enter your username and password")

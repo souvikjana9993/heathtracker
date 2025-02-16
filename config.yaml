@@ -1,14 +1,15 @@
+cookie:
+  expiry_days: 30
+  key: some_signature_key # Must be a string
+  name: some_cookie_name
 credentials:
   usernames:
     souvik:
+      email: souvik@testmail.com
       name: Souvik
-      password: $2b$12$HuSW2a6llHoCaRd6kH5ehOok1XV1lClUR2uc8vJb5npr/dVYY9RPG  # Hashed version of "123"
-      logged_in: False
+      password: abc123
     sayani:
+      email: sayani@testmail.com
       name: Sayani
-      password: $2b$12$HuSW2a6llHoCaRd6kH5ehOok1XV1lClUR2uc8vJb5npr/dVYY9RPG  # Hashed version of "123"
-      logged_in: False
-cookie:
-  name: cookie
-  key: key  # Random string for cookie signing
-  expiry_days: 0
+      password: abc456
+    
