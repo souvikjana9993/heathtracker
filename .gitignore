@@ -2,11 +2,11 @@
 .env
 
 # Ignore report extracts directory
-report_extracts/
+report_extracts/**/*.json
 
 # Ignore reports directory
-reports/
-renamed_report_extracts/
+reports/**/*.pdf
+renamed_report_extracts/**/*.json
 # Ignore .venv directory
 .venv/
 
