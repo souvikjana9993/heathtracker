@@ -1,0 +1,12 @@
+cookie:
+  expiry_days: 30
+  key: some_signature_key # Must be a string
+  name: some_cookie_name
+credentials:
+  usernames:
+    u1@testmail.com:
+      email: u1@testmail.com
+      name: User name
+      password: abc123
+pre-authorized:
+  - u1@testmail.com

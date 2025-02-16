@@ -1,0 +1,15 @@
+cookie:
+  expiry_days: 30
+  key: some_signature_key # Must be a string
+  name: some_cookie_name
+credentials:
+  usernames:
+    souvik:
+      email: souvik@testmail.com
+      name: Souvik
+      password: abc123
+    sayani:
+      email: sayani@testmail.com
+      name: Sayani
+      password: abc456
+  

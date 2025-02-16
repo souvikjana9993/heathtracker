@@ -1,4 +1,3 @@
-# pdf_utils.py
 from google import genai
 from dotenv import load_dotenv
 import os
@@ -8,8 +7,9 @@ import re  # Import the regular expression module
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 model_id = "gemini-2.0-flash-exp"  # or appropriate model
+
 
 def extract_report_data(pdf_path):
     """
@@ -17,14 +17,11 @@ def extract_report_data(pdf_path):
     Includes extraction of report date from the report content.
     """
 
-    report_pdf = client.files.upload(
-        file=pdf_path,
-        config={'display_name': 'Report'}
-    )
+    report_pdf = client.files.upload(file=pdf_path, config={"display_name": "Report"})
 
     # pdf_utils.py
 
-# Modified prompt (snippet only)
+    # Modified prompt (snippet only)
     prompt = """
     You are processing a medical report in PDF format. Your task is to extract data *only* from pages that contain a tabular structure similar to a lab test report, and to avoid including repeated measures of the same parameter. A lab test report typically has columns for Parameter Name, Result, Unit, and Reference Range.
 
@@ -53,31 +50,33 @@ def extract_report_data(pdf_path):
             model=model_id,
             contents=[report_pdf, prompt],
             config={
-                'response_mime_type': 'application/json',
-                'response_schema': MedicalReport
-            }
+                "response_mime_type": "application/json",
+                "response_schema": MedicalReport,
+            },
         )
         report_data = response.text
         # Normalize parameter names
         report_json = json.loads(report_data)
 
-        report_data = json.dumps(report_json, indent=4) 
+        report_data = json.dumps(report_json, indent=4)
         return report_data
-    
+
     except Exception as e:
         print(f"Error processing report: {e}")
         return "{}"  # Return empty JSON object on error
+
 
 def extract_date_from_filename(filename):
     """
     Extracts the report date from the filename using a regular expression.
     Assumes the filename contains a date in YYYY-MM-DD format.
     """
-    match = re.search(r'(\d{4}-\d{2}-\d{2})', filename)
+    match = re.search(r"(\d{4}-\d{2}-\d{2})", filename)
     if match:
         return match.group(1)
     else:
         return "unknown_date"  # Or a default value if no date is found
+
 
 def get_report_date(report_data, filename):
     """
@@ -87,10 +86,11 @@ def get_report_date(report_data, filename):
     try:
         report_json = json.loads(report_data)
         report_date = report_json.get("report_date", "unknown_date")
-        if report_date == "unknown_date" or not re.match(r'\d{4}-\d{2}-\d{2}', report_date):
+        if report_date == "unknown_date" or not re.match(
+            r"\d{4}-\d{2}-\d{2}", report_date
+        ):
             report_date = extract_date_from_filename(filename)
         return report_date
     except (json.JSONDecodeError, AttributeError):
         # If JSON decoding fails, fallback to filename
         return extract_date_from_filename(filename)
-    
