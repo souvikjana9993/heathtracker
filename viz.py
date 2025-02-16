@@ -12,11 +12,7 @@ from personalised_reco_agent import get_personalized_recommendations
 from summary_agent import get_overall_summary
 import yaml
 from yaml.loader import SafeLoader
-import streamlit as st
-import streamlit_authenticator as stauth
 from streamlit_authenticator.utilities import LoginError
-import yaml
-from yaml.loader import SafeLoader
 
 st.set_page_config(layout="wide")
 
@@ -31,20 +27,14 @@ authenticator = stauth.Authenticate(
     auth_config["cookie"]["expiry_days"],
 )
 
-# --- Constants ---
-REPORTS_DIR = "reports"
-ORIGINAL_EXTRACTS_DIR = "report_extracts"
-RENAMED_EXTRACTS_DIR = "renamed_report_extracts"
 
-
-
-def fix_and_load_reports(directory):
+def fix_and_load_reports(ORIGINAL_EXTRACTS_DIR,RENAMED_EXTRACTS_DIR):
     """Loads all JSON reports from the given directory and returns a DataFrame."""
-    fix_parameters_across_json()  # Ensure parameter standardization
+    fix_parameters_across_json(ORIGINAL_EXTRACTS_DIR, RENAMED_EXTRACTS_DIR)
     reports = []
-    for filename in os.listdir(directory):
+    for filename in os.listdir(RENAMED_EXTRACTS_DIR):
         if filename.endswith('.json'):
-            file_path = os.path.join(directory, filename)
+            file_path = os.path.join(RENAMED_EXTRACTS_DIR, filename)
             with open(file_path, 'r') as f:
                 try:
                     data = json.load(f)
@@ -96,9 +86,6 @@ def plot_trend(df, parameter_name):
 def process_pdf_reports(uploaded_files):
     """Processes uploaded PDF reports and saves extracted data to JSON files."""
     try:
-        for dir_path in [REPORTS_DIR, ORIGINAL_EXTRACTS_DIR]:
-            os.makedirs(dir_path, exist_ok=True)
-
         for uploaded_file in uploaded_files:
             pdf_storage_path = os.path.join(REPORTS_DIR, uploaded_file.name)
             if os.path.exists(pdf_storage_path):
@@ -125,18 +112,42 @@ def process_pdf_reports(uploaded_files):
         st.error(f"Critical error in PDF processing: {str(e)}")
         raise e
 
+
+
 # --- Streamlit App UI ---
-st.title("📊 Health Analytics Dashboard")
+st.title("📊 Health and Reports Tracker Dashboard")
 
 try:
     authenticator.login("main")
+    if not st.session_state["authentication_status"]:
+        if st.button("Register", key="reg"):
+            authenticator.register_user("main")
 except LoginError as e:
     st.error(e)
 
 # Handle authentication response
 if st.session_state["authentication_status"]:
-    st.success(f"Welcome *{st.session_state['name']}*!")
-    # File Upload Section
+    # Top-right logout button
+    col1, col2 = st.columns([8, 1])
+    with col2:
+        authenticator.logout("Logout")
+    with col1:
+        st.success(f"Welcome *{st.session_state['name']}*!")
+
+    #set anc create directories
+    REPORTS_DIR = os.path.join("reports",st.session_state['username'])
+    ORIGINAL_EXTRACTS_DIR = os.path.join("report_extracts",st.session_state['username'])
+    RENAMED_EXTRACTS_DIR = os.path.join("renamed_report_extracts",st.session_state['username'])
+    
+    if not os.path.exists(REPORTS_DIR):
+        os.makedirs(REPORTS_DIR)
+
+    if not os.path.exists(ORIGINAL_EXTRACTS_DIR):
+        os.makedirs(ORIGINAL_EXTRACTS_DIR)
+
+    if not os.path.exists(RENAMED_EXTRACTS_DIR):
+        os.makedirs(RENAMED_EXTRACTS_DIR)     
+
     uploaded_files = st.file_uploader(
         "Upload Medical Reports (PDF format)",
         type=["pdf"],
@@ -153,10 +164,9 @@ if st.session_state["authentication_status"]:
     # Data Loading with error handling
     try:
         @st.cache_data
-        def load_data():
-            return fix_and_load_reports(RENAMED_EXTRACTS_DIR)
-
-        reports_df = load_data()
+        def load_data(username):
+            return fix_and_load_reports(ORIGINAL_EXTRACTS_DIR,RENAMED_EXTRACTS_DIR)
+        reports_df = load_data(st.session_state['username'])
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         st.stop()
@@ -218,7 +228,7 @@ if st.session_state["authentication_status"]:
 
     else:
         st.info("👋 Upload PDF reports to begin analysis")
-    authenticator.logout("Logout")
+    
 
 elif st.session_state["authentication_status"] is False:
     st.error("Username/password is incorrect")

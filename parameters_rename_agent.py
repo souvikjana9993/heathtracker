@@ -10,9 +10,7 @@ import re
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Constants
-EXTRACTS_DIR = "report_extracts"
-RENAMED_MAPPING_FILE = "renamed_parameters.json"  # Added constant for mapping file
-RENAMED_EXTRACTS_DIR = "renamed_report_extracts"  # New directory for renamed files
+RENAMED_MAPPING_FILE = "renamed_parameters.json"
 
 # Load Gemini API key from .env file
 load_dotenv()
@@ -51,7 +49,6 @@ def load_existing_mappings(filename):
         return {}
     return {}
 
-
 def extract_range_values(reference_interval_str):
     """Extracts lower and upper range values from a reference interval string."""
     if not reference_interval_str:
@@ -79,7 +76,6 @@ def extract_range_values(reference_interval_str):
     except Exception as e:
         logging.error(f"Error extracting range values: {e}")
         return None, None
-
 
 def normalize_parameters_with_gemini(all_parameters):
     """
@@ -184,7 +180,6 @@ def normalize_parameters_with_gemini(all_parameters):
 
     return normalized_names
 
-
 def rename_parameters(all_parameters, normalized_names):
     """
     Renames parameters in the copied JSON files based on the normalized names.
@@ -219,7 +214,6 @@ def rename_parameters(all_parameters, normalized_names):
 
     return renamed_mapping, renamed_counts
 
-
 def save_renamed_mapping(renamed_mapping, filename):
     """Saves the renamed parameter mapping to a JSON file."""
     try:
@@ -229,43 +223,34 @@ def save_renamed_mapping(renamed_mapping, filename):
     except Exception as e:
         logging.error(f"Error saving renamed mapping: {e}")
 
-
-def copy_files_to_renamed_directory():
-    """Copies all JSON files from EXTRACTS_DIR to RENAMED_EXTRACTS_DIR."""
+def copy_files_to_renamed_directory(source_dir,dest_dir):
+    """Copies all JSON files from source_dir to dest_sir."""
     # Ensure the destination directory exists
-    if not os.path.exists(RENAMED_EXTRACTS_DIR):
-        os.makedirs(RENAMED_EXTRACTS_DIR)
-
-    for filename in os.listdir(EXTRACTS_DIR):
+    for filename in os.listdir(source_dir):
         if filename.endswith('.json'):
-            source_path = os.path.join(EXTRACTS_DIR, filename)
-            destination_path = os.path.join(RENAMED_EXTRACTS_DIR, filename)
+            source_path = os.path.join(source_dir, filename)
+            destination_path = os.path.join(dest_dir, filename)
             try:
                 shutil.copy2(source_path, destination_path)  # copy2 preserves metadata
-                logging.info(f"Copied '{filename}' to '{RENAMED_EXTRACTS_DIR}'")
+                logging.info(f"Copied '{filename}' to '{dest_dir}'")
             except Exception as e:
                 logging.error(f"Error copying '{filename}': {e}")
 
-
-def fix_parameters_across_json():
+def fix_parameters_across_json(source_dir,dest_dir):
     """
     Main function to orchestrate parameter matching and renaming using Gemini.
     """
 
-    # Create the renamed extracts directory if it doesn't exist
-    if not os.path.exists(RENAMED_EXTRACTS_DIR):
-        os.makedirs(RENAMED_EXTRACTS_DIR)
-
     # Copy files to the renamed directory
     logging.info("Copying files to renamed directory...")
-    copy_files_to_renamed_directory()
+    copy_files_to_renamed_directory(source_dir,dest_dir)
     logging.info("Files copied.")
 
     # Load parameters from all JSON files (from the RENAMED directory now)
     all_parameters = {}
-    for filename in os.listdir(RENAMED_EXTRACTS_DIR):
+    for filename in os.listdir(dest_dir):
         if filename.endswith('.json'):
-            file_path = os.path.join(RENAMED_EXTRACTS_DIR, filename)
+            file_path = os.path.join(dest_dir, filename)
             all_parameters[file_path] = load_parameters_from_json(file_path)
 
     # Normalize parameters using Gemini
@@ -283,7 +268,3 @@ def fix_parameters_across_json():
     save_renamed_mapping(normalized_names, RENAMED_MAPPING_FILE) # Save all normalized names, including existing
 
     logging.info("Parameter matching and renaming process finished.")
-
-
-if __name__ == "__main__":
-    fix_parameters_across_json()
