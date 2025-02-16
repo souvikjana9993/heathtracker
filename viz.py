@@ -184,47 +184,44 @@ if st.session_state["authentication_status"]:
                 st.plotly_chart(fig, use_container_width=True)
 
             with col_reco:
-                patients = reports_df[reports_df['name'] == selected_parameter]['patient_name'].unique()
-                for patient in patients:
-                    with st.container():
-                        st.subheader(f"Recommendations for {patient}")
-                        with st.spinner("Generating..."):
-                            patient_data = reports_df[
-                                (reports_df['patient_name'] == patient) &
-                                (reports_df['name'] == selected_parameter)
-                            ]
-                            try:
-                                rec = get_personalized_recommendations(
-                                    patient, selected_parameter, patient_data
-                                )
-                                st.markdown(rec)
-                            except Exception as e:
-                                st.error(f"Error generating recommendations: {str(e)}")
+                with st.container():
+                    st.subheader(f"Recommendations for {st.session_state['username']}")
+                    with st.spinner("Generating..."):
+                        patient_data = reports_df[
+                            (reports_df['name'] == selected_parameter)
+                        ]
+                        try:
+                            patient = reports_df['patient_name'].unique()[0]
+                            rec = get_personalized_recommendations(
+                                patient, selected_parameter, patient_data
+                            )
+                            st.markdown(rec)
+                        except Exception as e:
+                            st.error(f"Error generating recommendations: {str(e)}")
 
         # Overall Summary Section
         st.divider()
         st.write("## 📋 Comprehensive Health Summary")
 
         if st.button("✨ Generate Overall Summary",key='generate_summary'):
-            for patient in reports_df['patient_name'].unique():
-                with st.expander(f"Full Summary for {patient}", expanded=False):
-                    with st.spinner(f"Analyzing {patient}'s history..."):
-                        try:
-                            summary = get_overall_summary(patient, reports_df[reports_df['patient_name'] == patient])
-                            st.markdown(f'''
-                            <div style="
-                                max-height: 500px;
-                                overflow-y: auto;
-                                padding: 20px;
-                                border: 1px solid #e0e0e0;
-                                border-radius: 8px;
-                                margin-bottom: 20px;
-                            ">
-                                {summary}
-                            </div>
-                            ''', unsafe_allow_html=True)
-                        except Exception as e:
-                            st.error(f"Summary generation failed: {str(e)}")
+            with st.expander(f"Full Summary for {patient}", expanded=False):
+                with st.spinner(f"Analyzing {patient}'s history..."):
+                    try:
+                        summary = get_overall_summary(patient, reports_df[reports_df['patient_name'] == patient])
+                        st.markdown(f'''
+                        <div style="
+                            max-height: 500px;
+                            overflow-y: auto;
+                            padding: 20px;
+                            border: 1px solid #e0e0e0;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                        ">
+                            {summary}
+                        </div>
+                        ''', unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error(f"Summary generation failed: {str(e)}")
 
     else:
         st.info("👋 Upload PDF reports to begin analysis")

@@ -5,4 +5,4 @@ streamlit
 pandas
 plotly
 python-dotenv
-streamlit-authenticator
+streamlit-authenticator>=0.4.1

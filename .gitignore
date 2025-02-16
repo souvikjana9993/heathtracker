@@ -12,4 +12,4 @@ renamed_report_extracts/**/*.json
 
 # Ignore Conda environment
 .conda/
-__pycache__/*.cpython-311.pyc
+__pycache__/*.pyc
