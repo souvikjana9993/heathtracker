@@ -6,3 +6,4 @@ pandas
 plotly
 python-dotenv
 streamlit-authenticator>=0.4.1
+black

@@ -5,18 +5,23 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables (configure logging before loading)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 load_dotenv()
 
 # Accessing the API key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    logging.error("Gemini API key not found. Please set the GEMINI_API_KEY environment variable.")
+    logging.error(
+        "Gemini API key not found. Please set the GEMINI_API_KEY environment variable."
+    )
     exit(1)
 
 # Initialize the client
-client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 model_id = "gemini-2.0-flash-exp"  # or appropriate model
+
 
 def get_personalized_recommendations(patient_name, parameter, trend_data):
     """
@@ -25,15 +30,21 @@ def get_personalized_recommendations(patient_name, parameter, trend_data):
 
     # Determine reference interval. Assumes all entries have same intervals
     try:
-        reference_interval = trend_data['reference_interval'].iloc[0]
-        reference_interval_str = ", ".join([f"{k}: {v}" for k, v in reference_interval.items()])
+        reference_interval = trend_data["reference_interval"].iloc[0]
+        reference_interval_str = ", ".join(
+            [f"{k}: {v}" for k, v in reference_interval.items()]
+        )
     except AttributeError:
         reference_interval_str = "N/A"
 
     # Format trend data
     trend_data_str = ""
     for index, row in trend_data.iterrows():
-        date = row['report_date'].strftime('%Y-%m-%d') if isinstance(row['report_date'], pd.Timestamp) else "Unknown Date"
+        date = (
+            row["report_date"].strftime("%Y-%m-%d")
+            if isinstance(row["report_date"], pd.Timestamp)
+            else "Unknown Date"
+        )
         trend_data_str += f"Date: {date}, Result: {row['result']}, "
 
     # Build the prompt
@@ -64,9 +75,11 @@ def get_personalized_recommendations(patient_name, parameter, trend_data):
     """
 
     try:
-        response = client.models.generate_content(model=model_id,contents=[prompt])
+        response = client.models.generate_content(model=model_id, contents=[prompt])
         recommendation = response.text.strip()
-        logging.info(f"Generated recommendation for {patient_name} regarding {parameter}.")
+        logging.info(
+            f"Generated recommendation for {patient_name} regarding {parameter}."
+        )
         return recommendation
     except Exception as e:
         logging.error(f"Error generating recommendation: {e}")
